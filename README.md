@@ -9,6 +9,9 @@ Base Docker image with just essentials: Hadoop, Hive ,HBase and Spark.
 * [Spark 2.4.5](https://spark.apache.org/docs/2.4.5/) in YARN mode (Spark Scala, PySpark and SparkR)
 * [Hbase 2.3.6](https://hbase.apache.org/)  in Fully Distributed (Multi-node) Mode
 * [Sqoop 1.4.7 ](https://sqoop.apache.org/)
+* [Livy 0.8.0](https://livy.apache.org/)
+* [Hudi 0.10.0](https://hudi.apache.org/)
+* [Trino 378](https://trino.io/) is not full support, becasue hadoop native packages not install for apline reason.
 
 ## Usage
 
@@ -35,7 +38,8 @@ Hive JDBC port is exposed to host:
 use both above build scripts  like
 
 ```shell
-sh build_env/app_base_image.sh your_version
+sh build_env_baseuang_image.sh your_version
+sh build_app_base_image.sh your_version
 ```
 
 `rm_none_images.sh` helps removing `<none>` tag of images in developing. use `docker image ps ` to checkout which image is created.

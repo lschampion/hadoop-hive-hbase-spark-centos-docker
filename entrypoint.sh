@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# reboot sshd service,must refresh ssh service
-/etc/init.d/sshd restart
+
+
+source /etc/profile
 
 # https://blog.csdn.net/jmx_bigdata/article/details/98506875
 # Sqoop报错：ERROR Could not register mbeans java.security.AccessControlException: access denied
-sed -i '/};/i permission javax.management.MBeanTrustPermission "register";' ${JAVA_HOME}/jre/lib/security/java.policy
+#sed -i '/};/i permission javax.management.MBeanTrustPermission "register";' ${JAVA_HOME}/jre/lib/security/java.policy
 
 # Sqoop报警告hcatalog does not exist!...accumulo does not exist!解决方案
 sed -i 's/Warning: $HCAT_HOME does not exist! HCatalog jobs will fail./$HCAT_HOME does not exist!/g' ${SQOOP_HOME}/bin/configure-sqoop
@@ -303,13 +304,13 @@ if [ $zoo_alive -gt 0 ] ; then
     fi
     # HBase regionserver startup
     if [ "${role}" = "regionserver" ]; then
-        wait_until ${HBASE_MASTER_HOSTNAME} 16000 
+        wait_until ${HBASE_MASTER_HOSTNAME} 16000 1000 4
         echo "`date` Starting regionserver on `hostname`" 
         hbase-daemon.sh start regionserver || echo "error: start regionserver fail on `hostname`"
     fi
     if [ "${role}" = "thrift" ]; then
 	    # 对于regionserver 只取最左边第一个hostname
-        wait_until ${HBASE_REGIONSERVER_HOSTNAME%% *} 16020
+        wait_until ${HBASE_REGIONSERVER_HOSTNAME%% *} 16020 1000 4
         echo "`date` Starting thrift on `hostname`" 
         hbase-daemon.sh start thrift2 || echo "error: start thrift2 fail on `hostname`"
     fi
