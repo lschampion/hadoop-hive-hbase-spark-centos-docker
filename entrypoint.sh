@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-
-source /etc/profile
-
+# 不起作用
+# source /etc/profile
+systemctl start sshd
 # https://blog.csdn.net/jmx_bigdata/article/details/98506875
 # Sqoop报错：ERROR Could not register mbeans java.security.AccessControlException: access denied
 #sed -i '/};/i permission javax.management.MBeanTrustPermission "register";' ${JAVA_HOME}/jre/lib/security/java.policy

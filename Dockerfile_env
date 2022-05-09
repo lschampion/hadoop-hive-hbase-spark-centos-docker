@@ -1,6 +1,18 @@
 # Centos7 default python version 2.7.5,pyspark only supports Python up to 3.7
 ################################-- Start Packaging --######################################
-FROM centos:centos7 as env_package
+FROM centos:centos8 as env_package
+
+ENV container docker
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+ rm -f /lib/systemd/system/multi-user.target.wants/*;\
+ rm -f /etc/systemd/system/*.wants/*;\
+ rm -f /lib/systemd/system/local-fs.target.wants/*; \
+ rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+ rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+ rm -f /lib/systemd/system/basic.target.wants/*;\
+ rm -f /lib/systemd/system/anaconda.target.wants/*;
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/usr/sbin/init"]
 
 # https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -9,9 +21,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # VOLUME [ "/sys/fs/cgroup" ]
 
 # 更新为ali mirror
-RUN yum install -y wget \
- && cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak \
- && wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo \
+RUN sed -i "s/mirrorlist/#mirrorlist/g" /etc/yum.repos.d/CentOS-* \
+ && sed -i "s/#baseurl=http:\/\/mirror.centos.org/baseurl=http:\/\/vault.centos.org/g" /etc/yum.repos.d/CentOS-* \
+ && yum install -y wget \
+# && mv /etc/yum.repos.d/CentOS-Linux-BaseOS.repo /etc/yum.repos.d/CentOS-Linux-BaseOS.repo.bak \
+# && mv /etc/yum.repos.d/CentOS-Linux-AppStream.repo /etc/yum.repos.d/CentOS-Linux-AppStream.repo.bak \
+# && wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-8.repo \
  && yum clean all && yum makecache \
  && yum install -y vim \
  && yum install -y iputils \
@@ -36,23 +51,21 @@ RUN yum install -y openssh-clients.x86_64 openssh-server.x86_64 \
  && sed -i "s/#PermitRootLogin.*/PermitRootLogin yes/g" /etc/ssh/sshd_config \
  && mkdir -p /root/.ssh && chmod 700 /root/.ssh/ \
  && ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa \
- && echo "root:${ROOT_PWD}" | chpasswd 
+ && echo "root:${ROOT_PWD}" | chpasswd \
+ && systemctl enable sshd.service
 # && systemctl status sshd.service \
 
 
 # https://www.cnblogs.com/xiejava/p/15541899.html
 # yum使用到了python2，修改了默认的python版本后，必须进行修复
-RUN python -V \
- && yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel \
+RUN yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel \
  && wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz \
  && tar -xf Python-3.7.5.tgz \
  && cd Python-3.7.5 \
  && ./configure && make && make install \
- && mv /usr/bin/python /usr/bin/python.bak && ln -s /usr/local/bin/python3 /usr/bin/python \
+ && ln -s /usr/local/bin/python3 /usr/bin/python \
  && ln -s /usr/local/bin/pip3 /usr/bin/pip \
- && which python3 && python3 -V \
- && sed -i "s/\/usr\/bin\/python/\/usr\/bin\/python2/g" /usr/libexec/urlgrabber-ext-down \
- && sed -i "s/\/usr\/bin\/python/\/usr\/bin\/python2/g" /usr/bin/yum \
+ && which python3 \
  && cd ../ && rm -rf Python-3.7.5 Python-3.7.5.tgz
 
 # Common settings
